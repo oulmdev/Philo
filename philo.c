@@ -62,6 +62,16 @@ long long  get_time(void)
 	return (time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
+void ft_usleep(long long time)
+{
+	long long start;
+
+	start = get_time();
+	while (get_time() - start < time)
+		usleep(100);
+}
+
+
 t_lst *new_lst(char *av[], int i)
 {
 	t_lst	*new;
@@ -147,9 +157,46 @@ int init(t_lst **philo, int ac, char *av[])
 void	print_it(t_lst *philo, char *message)
 {
 	pthread_mutex_lock(&philo->print);
-	printf("\033[0;36mMs : %lld \e[0m| Philo Id: [%d] \033[0;33m%s\033[0m\n",
+	printf("%lld  Philo %d %s\n",
 		get_time() - philo->t_start, philo->id, message);
 	pthread_mutex_unlock(&philo->print);
+}
+
+int is_full(t_lst *philo)
+{
+	if (philo->n_eat == -1)
+		return (1);	
+	if (philo->n_eat_count == philo->n_eat)
+	{
+		philo->is_full = 1;
+		return (0);
+	}
+	return (1);
+}
+
+int is_dead(t_lst *philo)
+{
+	t_lst *tmp;
+
+	tmp = philo;
+	while (tmp->next != philo)
+	{
+		if (tmp->is_dead)
+			return (1);
+		tmp = tmp->next;
+	}
+	tmp = philo;
+	while (tmp->next != philo)
+	{
+		if (get_time() - tmp->t_last_eat > tmp->t_die)
+		{
+			print_it(tmp, "died");
+			tmp->is_dead = 1;
+			return (1);
+		}
+		tmp = tmp->next;
+	}
+	return (0);
 }
 
 void *routine(void *arg)
@@ -157,22 +204,42 @@ void *routine(void *arg)
 	t_lst	*philo;
 
 	philo = (t_lst *)arg;
-	while (1)
+
+	while (is_full(philo) && !is_dead(philo))
 	{
+		if (is_dead(philo))
+			break ;
 		pthread_mutex_lock(&philo->fork);
 		print_it(philo, "has taken a fork");
 		pthread_mutex_lock(&philo->next->fork);
+		if (is_dead(philo))
+			break ;
 		print_it(philo, "has taken a fork");
 		print_it(philo, "is eating");
-		usleep(philo->t_eat * 1000);
-		pthread_mutex_unlock(&philo->fork);
+		philo->t_last_eat = get_time();
+
+		ft_usleep(philo->t_eat);
 		pthread_mutex_unlock(&philo->next->fork);
+		pthread_mutex_unlock(&philo->fork);
+		philo->n_eat_count++;
+		if (philo->n_eat_count == philo->n_eat)
+		{
+			philo->is_full = 1;
+			break ;
+		}
+		if (is_dead(philo))
+			break ;
+		
 		print_it(philo, "is sleeping");
-		usleep(philo->t_sleep * 1000);
+		ft_usleep(philo->t_sleep);
+		if (is_dead(philo))
+			break ;
 		print_it(philo, "is tinking");
 	}
 	
 }
+
+
 
 int philosophers(t_lst *philo)
 {
@@ -183,21 +250,37 @@ int philosophers(t_lst *philo)
 	i = 0;
 	while (i < tmp->n_philo)
 	{
-		
-		if (pthread_create(&tmp->thread, NULL, &routine, tmp))
-		{
-			return (1);
-		}
-		pthread_detach(tmp->thread);
-		
+		pthread_create(&tmp->thread, NULL, &routine, tmp);
+		tmp = tmp->next;
+		usleep(100);
+		i++;
+	}
+	tmp = philo;
+
+	i = 0;
+	while (i < tmp->n_philo)
+	{
+		pthread_join(tmp->thread, NULL);
 		tmp = tmp->next;
 		i++;
 	}
-	// while (i)
-	// {
-	// 	tmp = tmp->next;
-	// 	i--;
-	// }
+	return (0);
+}
+
+int destroy_mutexes(t_lst *philo)
+{
+	t_lst	*tmp;
+	int		i;
+
+	tmp = philo;
+	i = 0;
+	while (i < tmp->n_philo)
+	{
+		pthread_mutex_destroy(&tmp->fork);
+		pthread_mutex_destroy(&tmp->print);
+		tmp = tmp->next;
+		i++;
+	}
 	return (0);
 }
 
@@ -207,23 +290,12 @@ int main(int ac, char *av[])
 
 	philo = NULL;
 	if (ac < 5 || ac > 6)
-		return (printf("Error: Wrong number of arguments\n"));
+		return (printf("Error:  number of arguments\n"));
 	if (init(&philo, ac, av))
-		return (printf("Error: Wrong arguments\n"));
-	int i = 0;
-
-	// while (1)
-	// {
-	// 	printf("====================================\n");
-	// 	printf("id: %d\n", philo->id);
-	// 	sleep(1);
-	// 	printf("====================================\n");
-	// 	philo = philo->next;
-	// }
-	
+		return (printf("Error:  arguments\n"));	
 	if (philosophers(philo))
 		return (printf("Error: Failed to create threads\n"));
-	// if (destroy_mutexes(philo))
-	// 	return (printf("Error: Failed to destroy mutexes\n"));
+	if (destroy_mutexes(philo))
+		return (printf("Error: Failed to destroy mutexes\n"));
 	return (0);
 }

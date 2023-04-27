@@ -37,6 +37,7 @@ typedef struct s_lst
 	pthread_t		thread; // thread of the philo
 	pthread_mutex_t	fork; // fork of the philo : done
 	pthread_mutex_t	print; // mutex for printing : done
+	pthread_mutex_t dead; // mutex for death : done
 	struct s_lst	*next; // next philo
 }	t_lst;
 
