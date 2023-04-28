@@ -20,6 +20,11 @@
 # include <pthread.h>
 # include <sys/time.h>
 
+
+
+#define RED "\033[0;31m"
+#define RESET "\033[0m"
+
 typedef struct s_lst
 {
 	int				id; // philo id : done
@@ -35,6 +40,7 @@ typedef struct s_lst
 	int				is_dead; // 1 if the philo is dead : done
 	int				is_full; // 1 if the philo is full : done
 	pthread_t		thread; // thread of the philo
+	pthread_t		dead_thread; // thread of the death
 	pthread_mutex_t	fork; // fork of the philo : done
 	pthread_mutex_t	print; // mutex for printing : done
 	pthread_mutex_t dead; // mutex for death : done

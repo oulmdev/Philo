@@ -174,29 +174,24 @@ int is_full(t_lst *philo)
 	return (1);
 }
 
-int is_dead(t_lst *philo)
+void *check_dead(void *arg)
 {
-	t_lst *tmp;
+	t_lst	*philo;
 
-	tmp = philo;
-	while (tmp->next != philo)
+	philo = (t_lst *)arg;
+	while (1)
 	{
-		if (tmp->is_dead)
-			return (1);
-		tmp = tmp->next;
-	}
-	tmp = philo;
-	while (tmp->next != philo)
-	{
-		if (get_time() - tmp->t_last_eat > tmp->t_die)
+		if (get_time() - philo->t_last_eat > philo->t_die)
 		{
-			print_it(tmp, "died");
-			tmp->is_dead = 1;
-			return (1);
+			print_it(philo, RED"died"RESET);
+			philo->is_dead = 1;
+			pthread_mutex_unlock(&philo->dead);
+			pthread_mutex_unlock(&philo->dead); 
+			return (NULL);
 		}
-		tmp = tmp->next;
+		philo = philo->next;
 	}
-	return (0);
+	return (NULL);
 }
 
 void *routine(void *arg)
@@ -204,39 +199,33 @@ void *routine(void *arg)
 	t_lst	*philo;
 
 	philo = (t_lst *)arg;
-
-	while (is_full(philo) && !is_dead(philo))
+	pthread_t dead_thread;
+	pthread_create(&philo->dead_thread, NULL, &check_dead, philo);
+	pthread_detach(philo->dead_thread);
+	while (is_full(philo))
 	{
-		if (is_dead(philo))
-			break ;
 		pthread_mutex_lock(&philo->fork);
 		print_it(philo, "has taken a fork");
 		pthread_mutex_lock(&philo->next->fork);
-		if (is_dead(philo))
-			break ;
 		print_it(philo, "has taken a fork");
 		print_it(philo, "is eating");
 		philo->t_last_eat = get_time();
-
 		ft_usleep(philo->t_eat);
 		pthread_mutex_unlock(&philo->next->fork);
 		pthread_mutex_unlock(&philo->fork);
 		philo->n_eat_count++;
+		if (philo->is_dead)
+			break ;
 		if (philo->n_eat_count == philo->n_eat)
 		{
 			philo->is_full = 1;
 			break ;
 		}
-		if (is_dead(philo))
-			break ;
-		
 		print_it(philo, "is sleeping");
 		ft_usleep(philo->t_sleep);
-		if (is_dead(philo))
-			break ;
 		print_it(philo, "is tinking");
 	}
-	
+	return (NULL);
 }
 
 
@@ -248,6 +237,7 @@ int philosophers(t_lst *philo)
 
 	tmp = philo;
 	i = 0;
+	pthread_mutex_lock(&philo->dead);
 	while (i < tmp->n_philo)
 	{
 		pthread_create(&tmp->thread, NULL, &routine, tmp);
@@ -258,14 +248,17 @@ int philosophers(t_lst *philo)
 	tmp = philo;
 
 	i = 0;
+
 	while (i < tmp->n_philo)
 	{
 		pthread_join(tmp->thread, NULL);
 		tmp = tmp->next;
 		i++;
 	}
+	pthread_mutex_lock(&philo->dead);
 	return (0);
 }
+
 
 int destroy_mutexes(t_lst *philo)
 {
@@ -274,6 +267,7 @@ int destroy_mutexes(t_lst *philo)
 
 	tmp = philo;
 	i = 0;
+
 	while (i < tmp->n_philo)
 	{
 		pthread_mutex_destroy(&tmp->fork);
