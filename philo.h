@@ -35,7 +35,6 @@ typedef struct s_lst
 	int				n_eat; // number of times each philo must eat : done
 	long long		t_start; // time when the simulation started : done
 	long long		t_last_eat; // time when the last meal was taken
-	long long		t_end; // time when the simulation ended
 	int				n_eat_count; // number of times the philo has eaten
 	int				is_dead; // 1 if the philo is dead : done
 	int				is_full; // 1 if the philo is full : done
@@ -43,7 +42,7 @@ typedef struct s_lst
 	pthread_t		dead_thread; // thread of the death
 	pthread_mutex_t	fork; // fork of the philo : done
 	pthread_mutex_t	print; // mutex for printing : done
-	pthread_mutex_t dead; // mutex for death : done
+	pthread_mutex_t	stop; // mutex for printing : done
 	struct s_lst	*next; // next philo
 }	t_lst;
 

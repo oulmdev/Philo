@@ -12,6 +12,9 @@
 
 #include "philo.h"
 
+int stop_simulation(t_lst *philo, int what);
+
+
 int ft_atoi(char *str)
 {
 	int	i;
@@ -87,7 +90,6 @@ t_lst *new_lst(char *av[], int i)
 	new->n_eat = (av[5]) ? ft_atoi(av[5]) : -1;
 	new->t_start = get_time();
 	new->t_last_eat = new->t_start;
-	new->t_end = new->t_start + new->t_die;
 	new->n_eat_count = 0;
 	new->is_dead = 0;
 	new->is_full = 0;
@@ -148,9 +150,9 @@ int init(t_lst **philo, int ac, char *av[])
 	if (check_args(ac, av))
 		return (1);
 	if (init_philos(philo, av))
-		return (1);
+		return (2);
 	if (init_mutexes(philo, ac))
-		return (1);
+		return (init_mutexes(philo, ac));
 	return (0);
 }
 
@@ -179,14 +181,13 @@ void *check_dead(void *arg)
 	t_lst	*philo;
 
 	philo = (t_lst *)arg;
-	while (1)
+	while (!philo->is_full)
 	{
-		if (get_time() - philo->t_last_eat > philo->t_die)
+		if (get_time() - philo->t_last_eat > philo->t_die && !philo->is_full)
 		{
 			print_it(philo, RED"died"RESET);
 			philo->is_dead = 1;
-			pthread_mutex_unlock(&philo->dead);
-			pthread_mutex_unlock(&philo->dead); 
+			stop_simulation(philo, 1);
 			return (NULL);
 		}
 		philo = philo->next;
@@ -200,8 +201,8 @@ void *routine(void *arg)
 
 	philo = (t_lst *)arg;
 	pthread_t dead_thread;
-	pthread_create(&philo->dead_thread, NULL, &check_dead, philo);
-	pthread_detach(philo->dead_thread);
+	pthread_create(&dead_thread, NULL, &check_dead, philo);
+	pthread_detach(dead_thread);
 	while (is_full(philo))
 	{
 		pthread_mutex_lock(&philo->fork);
@@ -228,7 +229,24 @@ void *routine(void *arg)
 	return (NULL);
 }
 
+int stop_simulation(t_lst *philo, int what)
+{
+	t_lst	*tmp;
+	int		i;
 
+	tmp = philo;
+	i = 0;
+	while (i < tmp->n_philo)
+	{
+		if (what == 0 && tmp->id == 1)
+			return pthread_mutex_lock(&tmp->stop);
+		else if (what == 1 && tmp->id == 1)
+			return pthread_mutex_unlock(&tmp->stop);
+		tmp = tmp->next;
+		i++;
+	}
+	return (0);
+}
 
 int philosophers(t_lst *philo)
 {
@@ -237,25 +255,26 @@ int philosophers(t_lst *philo)
 
 	tmp = philo;
 	i = 0;
-	pthread_mutex_lock(&philo->dead);
+	stop_simulation(philo, 0);
 	while (i < tmp->n_philo)
 	{
-		pthread_create(&tmp->thread, NULL, &routine, tmp);
+		if (pthread_create(&tmp->thread, NULL, &routine, tmp))
+			return (1);
 		tmp = tmp->next;
+		
 		usleep(100);
 		i++;
 	}
 	tmp = philo;
-
 	i = 0;
-
+	stop_simulation(philo, 1);
 	while (i < tmp->n_philo)
 	{
-		pthread_join(tmp->thread, NULL);
+		if (pthread_join(tmp->thread, NULL))
+			return (1);
 		tmp = tmp->next;
 		i++;
 	}
-	pthread_mutex_lock(&philo->dead);
 	return (0);
 }
 
@@ -286,7 +305,7 @@ int main(int ac, char *av[])
 	if (ac < 5 || ac > 6)
 		return (printf("Error:  number of arguments\n"));
 	if (init(&philo, ac, av))
-		return (printf("Error:  arguments\n"));	
+		return (printf("Error :  %d\n", init(&philo, ac, av)));	
 	if (philosophers(philo))
 		return (printf("Error: Failed to create threads\n"));
 	if (destroy_mutexes(philo))
