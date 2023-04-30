@@ -13,7 +13,7 @@
 #include "philo.h"
 
 int stop_simulation(t_lst *philo, int what);
-
+void set_struct(t_lst *philo);
 
 int ft_atoi(char *str)
 {
@@ -91,8 +91,8 @@ t_lst *new_lst(char *av[], int i)
 	new->t_start = get_time();
 	new->t_last_eat = new->t_start;
 	new->n_eat_count = 0;
-	new->is_dead = 0;
-	new->is_full = 0;
+	new->is_dead = false;
+	new->is_full = false;
 	new->next = NULL;
 	return (new);
 }
@@ -137,8 +137,6 @@ int init_mutexes(t_lst **philo, int ac)
 	{
 		if (pthread_mutex_init(&tmp->fork, NULL))
 			return (1);
-		if (pthread_mutex_init(&tmp->print, NULL))
-			return (1);
 		tmp = tmp->next;
 		i++;
 	}
@@ -158,22 +156,50 @@ int init(t_lst **philo, int ac, char *av[])
 
 void	print_it(t_lst *philo, char *message)
 {
-	pthread_mutex_lock(&philo->print);
+	t_lst	*tmp;
+
+	tmp = philo;
+	if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+		return ;
+	while (tmp->id != 1)
+		tmp = tmp->next;
+	pthread_mutex_lock(&tmp->stop);
 	printf("%lld  Philo %d %s\n",
 		get_time() - philo->t_start, philo->id, message);
-	pthread_mutex_unlock(&philo->print);
+	pthread_mutex_unlock(&tmp->stop);
 }
 
 int is_full(t_lst *philo)
 {
 	if (philo->n_eat == -1)
-		return (1);	
-	if (philo->n_eat_count == philo->n_eat)
+		return (1);
+	
+	int i;
+	i = 0;
+	while (i < philo->n_philo)
 	{
-		philo->is_full = 1;
-		return (0);
+		if (philo->n_eat_count < philo->n_eat)
+			return (0);
+		philo = philo->next;
+		i++;
 	}
+	set_struct(philo);
 	return (1);
+}
+
+void set_struct(t_lst *philo)
+{	
+	int i;
+
+	i = 0;
+	while (i < philo->n_philo)
+	{
+		philo->is_dead = true;
+		philo->final = true;
+		philo = philo->next;
+		i++;
+	}
+	
 }
 
 void *check_dead(void *arg)
@@ -181,16 +207,15 @@ void *check_dead(void *arg)
 	t_lst	*philo;
 
 	philo = (t_lst *)arg;
-	while (!philo->is_full)
+	while (!philo->is_dead && !philo->final)
 	{
-		if (get_time() - philo->t_last_eat > philo->t_die && !philo->is_full)
+		if (get_time() - philo->t_last_eat > philo->t_die)
 		{
 			print_it(philo, RED"died"RESET);
-			philo->is_dead = 1;
-			stop_simulation(philo, 1);
+			set_struct(philo);
 			return (NULL);
 		}
-		philo = philo->next;
+		usleep(100);
 	}
 	return (NULL);
 }
@@ -201,12 +226,16 @@ void *routine(void *arg)
 
 	philo = (t_lst *)arg;
 	pthread_t dead_thread;
-	pthread_create(&dead_thread, NULL, &check_dead, philo);
-	pthread_detach(dead_thread);
-	while (is_full(philo))
+	while (!philo->is_full && !philo->is_dead && !philo->final)
 	{
+		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+			break ;
 		pthread_mutex_lock(&philo->fork);
+		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+			break ;
 		print_it(philo, "has taken a fork");
+		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+			break ;
 		pthread_mutex_lock(&philo->next->fork);
 		print_it(philo, "has taken a fork");
 		print_it(philo, "is eating");
@@ -215,37 +244,31 @@ void *routine(void *arg)
 		pthread_mutex_unlock(&philo->next->fork);
 		pthread_mutex_unlock(&philo->fork);
 		philo->n_eat_count++;
-		if (philo->is_dead)
-			break ;
-		if (philo->n_eat_count == philo->n_eat)
-		{
-			philo->is_full = 1;
-			break ;
-		}
+		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+			break ; 
 		print_it(philo, "is sleeping");
 		ft_usleep(philo->t_sleep);
+		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+			break ;
 		print_it(philo, "is tinking");
 	}
 	return (NULL);
 }
 
-int stop_simulation(t_lst *philo, int what)
+void *check_full(void *arg)
 {
-	t_lst	*tmp;
-	int		i;
+	t_lst	*philo;
 
-	tmp = philo;
-	i = 0;
-	while (i < tmp->n_philo)
+	philo = (t_lst *)arg;
+	while (1)
 	{
-		if (what == 0 && tmp->id == 1)
-			return pthread_mutex_lock(&tmp->stop);
-		else if (what == 1 && tmp->id == 1)
-			return pthread_mutex_unlock(&tmp->stop);
-		tmp = tmp->next;
-		i++;
+		if (is_full(philo))
+			break ;
+		philo = philo->next;
+		usleep(100);
 	}
-	return (0);
+	philo->final = true;
+	return (NULL);
 }
 
 int philosophers(t_lst *philo)
@@ -255,19 +278,25 @@ int philosophers(t_lst *philo)
 
 	tmp = philo;
 	i = 0;
-	stop_simulation(philo, 0);
+	pthread_t manager_thread;
+	pthread_mutex_init(&tmp->stop, NULL);
 	while (i < tmp->n_philo)
 	{
 		if (pthread_create(&tmp->thread, NULL, &routine, tmp))
 			return (1);
+		pthread_create(&manager_thread, NULL, &check_dead, philo);
+		pthread_detach(manager_thread);
 		tmp = tmp->next;
-		
 		usleep(100);
 		i++;
 	}
+	// if (philo->n_eat != -1)
+	// {
+	// 	pthread_create(&manager_thread, NULL, &check_full, philo);
+	// 	pthread_detach(manager_thread);
+	// }
 	tmp = philo;
 	i = 0;
-	stop_simulation(philo, 1);
 	while (i < tmp->n_philo)
 	{
 		if (pthread_join(tmp->thread, NULL))
@@ -290,7 +319,6 @@ int destroy_mutexes(t_lst *philo)
 	while (i < tmp->n_philo)
 	{
 		pthread_mutex_destroy(&tmp->fork);
-		pthread_mutex_destroy(&tmp->print);
 		tmp = tmp->next;
 		i++;
 	}

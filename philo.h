@@ -14,12 +14,17 @@
 
 # define PHILO_H
 
-# include <stdio.h>
 # include <stdlib.h>
+# include <stdio.h>
 # include <unistd.h>
 # include <pthread.h>
 # include <sys/time.h>
 
+enum e_bool
+{
+	false,
+	true
+};
 
 
 #define RED "\033[0;31m"
@@ -29,6 +34,7 @@ typedef struct s_lst
 {
 	int				id; // philo id : done
 	int				n_philo; // number of philos : done
+	int 			final;
 	long long		t_die; // time to die : done
 	long long		t_eat; // time to eat : done
 	long long		t_sleep; // time to sleep : done
@@ -41,7 +47,6 @@ typedef struct s_lst
 	pthread_t		thread; // thread of the philo
 	pthread_t		dead_thread; // thread of the death
 	pthread_mutex_t	fork; // fork of the philo : done
-	pthread_mutex_t	print; // mutex for printing : done
 	pthread_mutex_t	stop; // mutex for printing : done
 	struct s_lst	*next; // next philo
 }	t_lst;
