@@ -164,6 +164,11 @@ void	print_it(t_lst *philo, char *message)
 	while (tmp->id != 1)
 		tmp = tmp->next;
 	pthread_mutex_lock(&tmp->stop);
+	if (philo->is_dead || philo->final)
+	{
+		pthread_mutex_unlock(&tmp->stop);
+		return ;
+	}
 	printf("%lld  Philo %d %s\n",
 		get_time() - philo->t_start, philo->id, message);
 	pthread_mutex_unlock(&tmp->stop);
@@ -207,15 +212,25 @@ void *check_dead(void *arg)
 	t_lst	*philo;
 
 	philo = (t_lst *)arg;
+	t_lst *tmp;
+
+	tmp = philo;
+	int i = 0;
 	while (!philo->is_dead && !philo->final)
 	{
-		if (get_time() - philo->t_last_eat > philo->t_die && !philo->is_dead)
+		i = 0;
+		while (i < philo->n_philo)
 		{
-			print_it(philo, RED"died"RESET);
-			set_struct(philo);
-			return (NULL);
+			if (get_time() - philo->t_last_eat > philo->t_die && !philo->is_dead && !philo->final)
+			{
+				print_it(tmp, RED"died"RESET);
+				set_struct(philo);
+				usleep(100);
+				return (NULL);
+			}
+			philo = philo->next;
+			i++;
 		}
-		usleep(100);
 	}
 	return (NULL);
 }
@@ -228,14 +243,14 @@ void *routine(void *arg)
 	pthread_t dead_thread;
 	while (!philo->is_full && !philo->is_dead && !philo->final)
 	{
-		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-			break ;
+		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+		// 	break ;
 		pthread_mutex_lock(&philo->fork);
-		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-			break ;
+		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+		// 	break ;
 		print_it(philo, "has taken a fork");
-		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-			break ;
+		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+		// 	break ;
 		pthread_mutex_lock(&philo->next->fork);
 		print_it(philo, "has taken a fork");
 		print_it(philo, "is eating");
@@ -248,28 +263,14 @@ void *routine(void *arg)
 			break ; 
 		print_it(philo, "is sleeping");
 		ft_usleep(philo->t_sleep);
-		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-			break ;
+		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+		// 	break ;
 		print_it(philo, "is tinking");
 	}
 	return (NULL);
 }
 
-void *check_full(void *arg)
-{
-	t_lst	*philo;
 
-	philo = (t_lst *)arg;
-	while (1)
-	{
-		if (is_full(philo))
-			break ;
-		philo = philo->next;
-		usleep(100);
-	}
-	philo->final = true;
-	return (NULL);
-}
 
 int philosophers(t_lst *philo)
 {
@@ -284,17 +285,12 @@ int philosophers(t_lst *philo)
 	{
 		if (pthread_create(&tmp->thread, NULL, &routine, tmp))
 			return (1);
-		pthread_create(&manager_thread, NULL, &check_dead, philo);
+		pthread_create(&manager_thread, NULL, &check_dead, tmp);
 		pthread_detach(manager_thread);
 		tmp = tmp->next;
-		usleep(100);
 		i++;
+		usleep(100);
 	}
-	// if (philo->n_eat != -1)
-	// {
-	// 	pthread_create(&manager_thread, NULL, &check_full, philo);
-	// 	pthread_detach(manager_thread);
-	// }
 	tmp = philo;
 	i = 0;
 	while (i < tmp->n_philo)
