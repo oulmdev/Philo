@@ -209,7 +209,7 @@ void *check_dead(void *arg)
 	philo = (t_lst *)arg;
 	while (!philo->is_dead && !philo->final)
 	{
-		if (get_time() - philo->t_last_eat > philo->t_die)
+		if (get_time() - philo->t_last_eat > philo->t_die && !philo->is_dead)
 		{
 			print_it(philo, RED"died"RESET);
 			set_struct(philo);
