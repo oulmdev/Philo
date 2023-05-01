@@ -225,10 +225,10 @@ void *check_dead(void *arg)
 			{
 				print_it(tmp, RED"died"RESET);
 				set_struct(philo);
-				usleep(100);
 				return (NULL);
 			}
 			philo = philo->next;
+			usleep(100);
 			i++;
 		}
 	}
@@ -251,18 +251,23 @@ void *routine(void *arg)
 		print_it(philo, "has taken a fork");
 		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
 		// 	break ;
+		if (philo->n_philo == 1)
+		{
+			print_it(philo, RED"died"RESET);
+		 	return arg;
+		}
 		pthread_mutex_lock(&philo->next->fork);
 		print_it(philo, "has taken a fork");
 		print_it(philo, "is eating");
 		philo->t_last_eat = get_time();
-		ft_usleep(philo->t_eat);
+		usleep(philo->t_eat * 1000);
 		pthread_mutex_unlock(&philo->next->fork);
 		pthread_mutex_unlock(&philo->fork);
 		philo->n_eat_count++;
 		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
 			break ; 
 		print_it(philo, "is sleeping");
-		ft_usleep(philo->t_sleep);
+		usleep(philo->t_sleep * 1000);
 		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
 		// 	break ;
 		print_it(philo, "is tinking");
