@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   philo.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: moulmoud@student.1337.ma <moulmoud>        +#+  +:+       +#+        */
+/*   By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/04/24 22:37:12 by moulmoud@st       #+#    #+#             */
-/*   Updated: 2023/04/24 22:37:12 by moulmoud@st      ###   ########.fr       */
+/*   Created: 2023/05/03 15:06:42 by moulmoud          #+#    #+#             */
+/*   Updated: 2023/05/03 15:36:08 by moulmoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "philo.h"
 
@@ -18,8 +19,7 @@ void set_struct(t_lst *philo);
 int ft_atoi(char *str)
 {
 	int	i;
-	int	n;
-
+	int n;
 	i = 0;
 	n = 0;
 	while (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' ||
@@ -159,7 +159,7 @@ void	print_it(t_lst *philo, char *message)
 	t_lst	*tmp;
 
 	tmp = philo;
-	if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
+	if ((philo->n_eat != -1 && philo->n_eat_count == philo->n_eat) || philo->final)
 		return ;
 	while (tmp->id != 1)
 		tmp = tmp->next;
@@ -178,7 +178,7 @@ int is_full(t_lst *philo)
 {
 	if (philo->n_eat == -1)
 		return (1);
-	
+
 	int i;
 	i = 0;
 	while (i < philo->n_philo)
@@ -193,7 +193,7 @@ int is_full(t_lst *philo)
 }
 
 void set_struct(t_lst *philo)
-{	
+{
 	int i;
 
 	i = 0;
@@ -204,7 +204,7 @@ void set_struct(t_lst *philo)
 		philo = philo->next;
 		i++;
 	}
-	
+
 }
 
 void *check_dead(void *arg)
@@ -243,14 +243,8 @@ void *routine(void *arg)
 	pthread_t dead_thread;
 	while (!philo->is_full && !philo->is_dead && !philo->final)
 	{
-		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-		// 	break ;
 		pthread_mutex_lock(&philo->fork);
-		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-		// 	break ;
 		print_it(philo, "has taken a fork");
-		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-		// 	break ;
 		if (philo->n_philo == 1)
 		{
 			print_it(philo, RED"died"RESET);
@@ -260,16 +254,14 @@ void *routine(void *arg)
 		print_it(philo, "has taken a fork");
 		print_it(philo, "is eating");
 		philo->t_last_eat = get_time();
-		usleep(philo->t_eat * 1000);
+		ft_usleep(philo->t_eat);
 		pthread_mutex_unlock(&philo->next->fork);
 		pthread_mutex_unlock(&philo->fork);
 		philo->n_eat_count++;
-		if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-			break ; 
+		if ((philo->n_eat != -1 && philo->n_eat_count == philo->n_eat) || philo->final)
+			break ;
 		print_it(philo, "is sleeping");
-		usleep(philo->t_sleep * 1000);
-		// if (philo->n_eat != -1 && philo->n_eat_count == philo->n_eat || philo->final)
-		// 	break ;
+		ft_usleep(philo->t_sleep);
 		print_it(philo, "is tinking");
 	}
 	return (NULL);
@@ -334,7 +326,7 @@ int main(int ac, char *av[])
 	if (ac < 5 || ac > 6)
 		return (printf("Error:  number of arguments\n"));
 	if (init(&philo, ac, av))
-		return (printf("Error :  %d\n", init(&philo, ac, av)));	
+		return (printf("Error :  %d\n", init(&philo, ac, av)));
 	if (philosophers(philo))
 		return (printf("Error: Failed to create threads\n"));
 	if (destroy_mutexes(philo))
