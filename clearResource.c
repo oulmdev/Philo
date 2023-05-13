@@ -3,15 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   clearResource.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: moulmoud <moulmoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 21:46:52 by moulmoud          #+#    #+#             */
-/*   Updated: 2023/05/11 16:27:34 by moulmoud         ###   ########.fr       */
+/*   Updated: 2023/05/13 13:49:43 by moulmoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #	include "philo.h"
 
+/*	Free all the resources used by the program. && destroy all the mutexes.
+**	PARAM: philos: the list of philosophers.
+*/
 void	clearresource(t_philo *philos)
 {
 	t_philo	*tmp;

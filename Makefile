@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+         #
+#    By: moulmoud <moulmoud@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/06 15:35:09 by moulmoud          #+#    #+#              #
-#    Updated: 2023/05/11 18:03:49 by moulmoud         ###   ########.fr        #
+#    Updated: 2023/05/13 16:58:43 by moulmoud         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,7 @@ NAME = philo
 
 CC = cc
 
-CFLAGS = -Wall -Wextra -Werror -pthread -fsanitize=thread
+CFLAGS = -Wall -Wextra -Werror -pthread
 
 SRCS = $(wildcard *.c)
 

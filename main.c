@@ -3,19 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: moulmoud <moulmoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/06 15:32:12 by moulmoud          #+#    #+#             */
-/*   Updated: 2023/05/11 16:25:05 by moulmoud         ###   ########.fr       */
+/*   Updated: 2023/05/13 15:17:46 by moulmoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #	include "philo.h"
 
-bool	init_monitor(t_monitor **monitor, char *av[]);
-bool	init_philos(t_philo **philos, t_monitor **monitor);
-bool	start_simulation(t_philo *philos);
-
+/*	Entry point of the program.
+**	PARAM: ac: the number of arguments.
+**	PARAM: av: the arguments.
+**	returns: 0 if the program ends successfully.
+**	returns: 1 if the program ends with an error.
+*/
 int	main(int ac, char *av[])
 {
 	t_monitor		*monitor;
@@ -36,12 +38,17 @@ int	main(int ac, char *av[])
 	return (0);
 }
 
+/*	Initializes the monitor.
+**	PARAM: monitor: a struct containing the monitor's data.
+**	PARAM: av: the arguments.
+**	returns: true if the monitor is initialized successfully.
+**	returns: false if the monitor initialization failed.
+*/
 bool	init_monitor(t_monitor **monitor, char *av[])
 {
 	*monitor = malloc(sizeof(t_monitor));
 	if (!*monitor)
 		return (false);
-
 	(*monitor)->nb_eat_max = 0;
 	(*monitor)->nb_philos = ft_atoi(av[1]);
 	(*monitor)->time_to_die = ft_atoi(av[2]);
@@ -62,6 +69,8 @@ bool	init_monitor(t_monitor **monitor, char *av[])
 	return (true);
 }
 
+/*	Initializes the philosophers.
+*/
 bool	init_philos(t_philo **philo, t_monitor **monitor)
 {
 	int	id;

@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/moulmoud/Desktop/Philo",
+      "program": "/Users/moulmoud/Desktop/Philo/build/Debug/outDebug"
+    }
+  ]
+}

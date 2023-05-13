@@ -3,15 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   newPhilo.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: moulmoud <moulmoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/06 15:42:49 by moulmoud          #+#    #+#             */
-/*   Updated: 2023/05/09 16:23:09 by moulmoud         ###   ########.fr       */
+/*   Updated: 2023/05/13 15:29:06 by moulmoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+/*	Getting the current time in milliseconds.
+	The struct timeval is used to hold the current time of day in seconds
+	and microseconds. 
+	The tv_sec field holds the number of seconds since
+	the Unix epoch (midnight on January 1, 1970).
+	tv_usec field holds the number of microseconds since the last full second.
+
+	so to calculate the time in miliseconds we multiply the seconds by 1000
+	and add the microseconds divided by 1000.
+	then we return the sum of the two.
+	EXAMPLE:
+		seconds = 1620925288
+		microseconds = 123456
+		(1620925200 * 1000) + (123456 / 1000) = 1620925288123
+*/
 long long	get_time(void)
 {
 	struct timeval	time;
@@ -39,6 +54,8 @@ long long	ft_atoi(char *str)
 	return (nbr);
 }
 
+/*	create new philo ,and init mutexes.
+*/
 t_philo	*newphilo(int id, t_monitor **monitor)
 {
 	t_philo	*philo;
@@ -49,7 +66,6 @@ t_philo	*newphilo(int id, t_monitor **monitor)
 	philo->id = id;
 	philo->eat_count = 0;
 	philo->monitor = (*monitor);
-	philo->is_full = false;
 	philo->last_eat = philo->monitor->start_time;
 	pthread_mutex_init(&philo->fork, NULL);
 	pthread_mutex_init(&philo->last_eat_mutex, NULL);

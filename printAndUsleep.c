@@ -3,15 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   printAndUsleep.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: moulmoud <moulmoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/08 13:47:58 by moulmoud          #+#    #+#             */
-/*   Updated: 2023/05/11 16:23:17 by moulmoud         ###   ########.fr       */
+/*   Updated: 2023/05/13 14:43:05 by moulmoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #	include "philo.h"
 
+/*	Print the message if the philo is not dead.
+**	if the philo is dead, return false. and unlock the mutexes.
+	else print the message and unlock the mutexes.
+	then return true.
+*/
 bool	print_it(t_philo *philo, char *str)
 {
 	pthread_mutex_lock(&((t_monitor *)philo->monitor)->dead);
@@ -32,10 +37,23 @@ bool	print_it(t_philo *philo, char *str)
 	return (true);
 }
 
+/*	Sleep for time milliseconds.
+**	If the philo is dead return, else sleep.
+
+**	This function is used to sleep for a specific time.
+**	I used it because usleep is not accurate. because of the scheduler.
+	EXAMPLE:
+		if we want to sleep for 1000 milliseconds,
+		usleep will sleep for 1000 milliseconds 
+		+ the time that the scheduler will take to switch to another thread.
+		so to prevent this, I used this function.
+	->	also it protects from overflow. if the time is too big.
+*/
 void	ft_usleep(long time, t_philo *philo)
 {
 	long	start;
 
+	(void)philo;
 	start = get_time();
 	while (get_time() - start < time)
 	{

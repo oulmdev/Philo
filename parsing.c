@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parsing.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: moulmoud <moulmoud@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: moulmoud <moulmoud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/06 15:33:25 by moulmoud          #+#    #+#             */
-/*   Updated: 2023/05/09 23:37:00 by moulmoud         ###   ########.fr       */
+/*   Updated: 2023/05/13 13:19:47 by moulmoud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@ int	ft_isdigit(int c)
 	return ((c >= '0' && c <= '9') || c == '+' || c == ' ');
 }
 
+/*	Checks if the arguments are valid.
+*/
 bool	parsing(int ac, char *av[])
 {
 	int	i;
